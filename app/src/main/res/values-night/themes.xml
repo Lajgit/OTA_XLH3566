@@ -1,0 +1,8 @@
+<resources>
+
+    <style name="Base.Theme.Ota_app"
+        parent="@android:style/Theme.DeviceDefault.Light.NoActionBar">
+
+    </style>
+
+</resources>
