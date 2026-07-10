@@ -6,6 +6,7 @@ import android.util.Log;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.util.Locale;
 
 public class OtaReceiver {
 
@@ -100,6 +101,34 @@ public class OtaReceiver {
                         type,
                         "ALREADY_LATEST",
                         "当前已是目标版本，无需升级"
+                );
+
+                PendingStore.clearTask(context, type);
+                finishUpgrade(context);
+                return;
+            }
+
+            if (("game".equals(type) || "ota".equals(type))
+                    && !prepareApkResumeFile(
+                    context,
+                    type,
+                    version,
+                    url,
+                    md5
+            )) {
+
+                StatusReporter.report(
+                        context,
+                        messageId,
+                        "failed",
+                        0,
+                        currentVersion,
+                        version,
+                        recordId,
+                        taskId,
+                        type,
+                        "DOWNLOAD_FAIL",
+                        "下载失败：无法清理与当前升级任务不匹配的断点文件"
                 );
 
                 PendingStore.clearTask(context, type);
@@ -248,6 +277,109 @@ public class OtaReceiver {
             Log.e(TAG, "ota error", e);
             finishUpgrade(context);
         }
+    }
+
+    private static boolean prepareApkResumeFile(
+            Context context,
+            String type,
+            String version,
+            String url,
+            String md5
+    ) {
+
+        try {
+
+            File baseDir = context.getExternalFilesDir(null);
+
+            if (baseDir == null) {
+                return true;
+            }
+
+            String fileName =
+                    "ota".equals(type)
+                            ? "ota.apk"
+                            : "main.apk";
+
+            File file =
+                    new File(
+                            baseDir,
+                            fileName
+                    );
+
+            String identityKey =
+                    "download_identity_"
+                            + type;
+
+            String identity =
+                    safeIdentityPart(version)
+                            + "\n"
+                            + safeIdentityPart(url)
+                            + "\n"
+                            + safeIdentityPart(md5)
+                            .toLowerCase(Locale.ROOT);
+
+            String savedIdentity =
+                    PendingStore.get(
+                            context,
+                            identityKey
+                    );
+
+            if (file.exists()
+                    && file.length() > 0
+                    && !identity.equals(savedIdentity)) {
+
+                Log.e(
+                        TAG,
+                        type
+                                + " download identity changed"
+                                + ", delete old partial file"
+                                + ", oldLength="
+                                + file.length()
+                );
+
+                boolean deleted =
+                        file.delete();
+
+                if (!deleted && file.exists()) {
+
+                    Log.e(
+                            TAG,
+                            type
+                                    + " delete old partial file failed"
+                    );
+
+                    return false;
+                }
+            }
+
+            PendingStore.save(
+                    context,
+                    identityKey,
+                    identity
+            );
+
+            return true;
+
+        } catch (Throwable e) {
+
+            Log.e(
+                    TAG,
+                    "prepare apk resume file fail, type="
+                            + type,
+                    e
+            );
+
+            return false;
+        }
+    }
+
+    private static String safeIdentityPart(
+            String value
+    ) {
+
+        return value == null
+                ? ""
+                : value.trim();
     }
 
     private static String getCurrentVersion(
