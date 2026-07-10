@@ -299,7 +299,7 @@ public class MqttCallbackImpl implements MqttCallbackExtended {
                     taskId,
                     type,
                     "DUPLICATE_MESSAGE",
-                    "重复升级指令，设备将继续当前任务或恢复未完成任务"
+                    "重复升级指令，设备已收到并正在处理或已进入后续流程"
             );
         }
 
