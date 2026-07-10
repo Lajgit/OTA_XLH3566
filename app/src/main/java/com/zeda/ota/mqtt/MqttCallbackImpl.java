@@ -286,7 +286,7 @@ public class MqttCallbackImpl implements MqttCallbackExtended {
         if (!msgId.isEmpty() &&
                 msgId.equals(lastMsg)) {
 
-            Log.e(TAG, "duplicate mqtt message");
+            Log.e(TAG, "duplicate mqtt message, continue retry or resume");
 
             StatusReporter.report(
                     context,
@@ -299,10 +299,8 @@ public class MqttCallbackImpl implements MqttCallbackExtended {
                     taskId,
                     type,
                     "DUPLICATE_MESSAGE",
-                    "重复升级指令，设备已收到并正在处理或已进入后续流程"
+                    "重复升级指令，设备将继续当前任务或恢复未完成任务"
             );
-
-            return;
         }
 
         DeviceReportManager.get(context)
