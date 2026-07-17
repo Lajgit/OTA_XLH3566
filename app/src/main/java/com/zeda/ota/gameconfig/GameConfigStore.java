@@ -6,6 +6,7 @@ import android.util.Log;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.zeda.ota.CommandResultReporter;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -29,13 +30,14 @@ public final class GameConfigStore {
     private static final String KEY_COMMAND_RESULT_OUTBOX = "command_result_outbox";
     private static final String KEY_GAME_CONFIG_REPORT_OUTBOX = "game_config_report_outbox";
 
+    private final Context appContext;
     private final SharedPreferences sp;
 
     public GameConfigStore(
             Context context
     ) {
-        this.sp = context.getApplicationContext()
-                .getSharedPreferences(SP, Context.MODE_PRIVATE);
+        this.appContext = context.getApplicationContext();
+        this.sp = appContext.getSharedPreferences(SP, Context.MODE_PRIVATE);
     }
 
     public boolean savePending(
@@ -227,7 +229,11 @@ public final class GameConfigStore {
     public boolean saveCommandResultOutbox(
             String payload
     ) {
-        return saveString(KEY_COMMAND_RESULT_OUTBOX, payload);
+        boolean saved = saveString(KEY_COMMAND_RESULT_OUTBOX, payload);
+        if (saved && CommandResultReporter.reportPayload(appContext, payload)) {
+            clearCommandResultOutbox();
+        }
+        return saved;
     }
 
     public String getCommandResultOutbox() {
