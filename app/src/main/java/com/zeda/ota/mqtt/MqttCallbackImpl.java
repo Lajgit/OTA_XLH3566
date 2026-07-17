@@ -3,6 +3,8 @@ package com.zeda.ota;
 import android.content.Context;
 import android.util.Log;
 
+import com.zeda.ota.gameconfig.GameConfigManager;
+
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -45,6 +47,8 @@ public class MqttCallbackImpl implements MqttCallbackExtended {
                     .sendHeartbeat();
 
             StatusReporter.flushPending(context);
+
+            CommandResultReporter.flushGameConfigOutbox(context);
 
             MqttManager.get(context)
                     .startHeartbeatLoop();
@@ -147,6 +151,9 @@ public class MqttCallbackImpl implements MqttCallbackExtended {
             if (topic.contains("/command/config")) {
 
                 Log.e(TAG, "config command");
+
+                GameConfigManager.get(context)
+                        .handleMqttCommand(payload);
 
                 return;
             }
