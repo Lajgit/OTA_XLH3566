@@ -249,7 +249,11 @@ public final class GameConfigStore {
     public boolean saveGameConfigReportOutbox(
             String payload
     ) {
-        return saveString(KEY_GAME_CONFIG_REPORT_OUTBOX, payload);
+        boolean saved = saveString(KEY_GAME_CONFIG_REPORT_OUTBOX, payload);
+        if (saved && GameConfigReporter.reportPayload(appContext, payload)) {
+            clearGameConfigReportOutbox();
+        }
+        return saved;
     }
 
     public String getGameConfigReportOutbox() {
