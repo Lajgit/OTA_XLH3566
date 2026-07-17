@@ -3,6 +3,8 @@ package com.zeda.ota;
 import android.content.Context;
 import android.util.Log;
 
+import com.zeda.ota.gameconfig.GameConfigReporter;
+
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -88,6 +90,7 @@ public class MqttManager {
                 StatusReporter.flushPending(context);
 
                 CommandResultReporter.flushGameConfigOutbox(context);
+                GameConfigReporter.flushOutbox(context);
 
                 startHeartbeatLoop();
 
@@ -164,6 +167,7 @@ public class MqttManager {
             StatusReporter.flushPending(context);
 
             CommandResultReporter.flushGameConfigOutbox(context);
+            GameConfigReporter.flushOutbox(context);
 
             startHeartbeatLoop();
 
