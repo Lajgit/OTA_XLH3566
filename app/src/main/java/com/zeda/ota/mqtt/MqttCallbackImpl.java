@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.Log;
 
 import com.zeda.ota.gameconfig.GameConfigManager;
+import com.zeda.ota.gameconfig.GameConfigReporter;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
@@ -49,6 +50,7 @@ public class MqttCallbackImpl implements MqttCallbackExtended {
             StatusReporter.flushPending(context);
 
             CommandResultReporter.flushGameConfigOutbox(context);
+            GameConfigReporter.flushOutbox(context);
 
             MqttManager.get(context)
                     .startHeartbeatLoop();
