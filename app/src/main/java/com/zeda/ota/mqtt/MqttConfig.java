@@ -109,4 +109,14 @@ public class MqttConfig {
                 + deviceId
                 + "/report/command-result";
     }
+
+    /**
+     * 游戏实际配置上报 topic
+     */
+    public static String getGameConfigReportTopic(String deviceId) {
+
+        return "pxd/v1/device/"
+                + deviceId
+                + "/report/game-config";
+    }
 }
