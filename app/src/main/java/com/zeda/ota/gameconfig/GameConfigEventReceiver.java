@@ -9,8 +9,6 @@ import org.json.JSONObject;
 
 /**
  * 接收 Unity 返回的游戏配置事件。
- *
- * <p>当前步骤只建立广播入口，完整状态机将在后续 GameConfigManager 中接入。</p>
  */
 public class GameConfigEventReceiver extends BroadcastReceiver {
 
@@ -75,10 +73,7 @@ public class GameConfigEventReceiver extends BroadcastReceiver {
                             + resultCode
             );
 
-            /*
-             * 后续步骤接入 GameConfigManager 后，将在这里转交：
-             * GameConfigManager.get(context).handleGameEvent(payload);
-             */
+            GameConfigManager.get(context).handleGameEvent(payload);
         } catch (Exception e) {
             Log.e(TAG, "parse game config event fail", e);
         }
