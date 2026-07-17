@@ -87,6 +87,8 @@ public class MqttManager {
 
                 StatusReporter.flushPending(context);
 
+                CommandResultReporter.flushGameConfigOutbox(context);
+
                 startHeartbeatLoop();
 
                 DeviceReportManager.get(context)
@@ -160,6 +162,8 @@ public class MqttManager {
             sendHeartbeat();
 
             StatusReporter.flushPending(context);
+
+            CommandResultReporter.flushGameConfigOutbox(context);
 
             startHeartbeatLoop();
 
