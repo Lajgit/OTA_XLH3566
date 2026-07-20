@@ -16,25 +16,41 @@ import java.util.Map;
 
 /**
  * 按项目约定生成确定性的 JSON 字符串并计算 SHA-256。
+ *
+ * <p>后端、OTA、Unity 必须使用同一套规范化规则，否则同一份 config
+ * 可能算出不同 configHash，导致 CONFIG_HASH_MISMATCH。</p>
  */
 public final class GameConfigCanonicalizer {
 
+    /**
+     * JSON 对象 key 排序规则：按 Unicode code point 升序排序，
+     * 不使用 Java 默认 UTF-16 字符串顺序。
+     */
     private static final Comparator<String> CODE_POINT_COMPARATOR =
             GameConfigCanonicalizer::compareByCodePoint;
 
     private GameConfigCanonicalizer() {
     }
 
+    /**
+     * 将任意 JsonElement 转为无空格、无换行、字段顺序稳定的规范化 JSON。
+     */
     public static String canonicalize(JsonElement element) {
         StringBuilder builder = new StringBuilder();
         appendCanonical(element, builder);
         return builder.toString();
     }
 
+    /**
+     * 对 data.config 对象执行规范化后计算 SHA-256。
+     */
     public static String calculateConfigHash(JsonElement config) {
         return sha256(canonicalize(config));
     }
 
+    /**
+     * 计算 UTF-8 字节序列的 SHA-256，返回 64 位小写十六进制字符串。
+     */
     public static String sha256(String value) {
         if (value == null) {
             throw new IllegalArgumentException("待计算哈希的字符串不能为空");
@@ -59,6 +75,9 @@ public final class GameConfigCanonicalizer {
         }
     }
 
+    /**
+     * 按 JSON 节点类型递归写入规范化结果。
+     */
     private static void appendCanonical(
             JsonElement element,
             StringBuilder builder
@@ -86,6 +105,9 @@ public final class GameConfigCanonicalizer {
         throw new IllegalArgumentException("不支持的 JSON 节点类型");
     }
 
+    /**
+     * 规范化对象：key 排序，value 递归规范化。
+     */
     private static void appendObject(
             JsonObject object,
             StringBuilder builder
@@ -111,6 +133,9 @@ public final class GameConfigCanonicalizer {
         builder.append('}');
     }
 
+    /**
+     * 规范化数组：数组元素顺序必须保持原样，不能排序。
+     */
     private static void appendArray(
             JsonArray array,
             StringBuilder builder
@@ -127,6 +152,9 @@ public final class GameConfigCanonicalizer {
         builder.append(']');
     }
 
+    /**
+     * 规范化字符串、布尔值和数字。
+     */
     private static void appendPrimitive(
             JsonPrimitive primitive,
             StringBuilder builder
@@ -149,6 +177,9 @@ public final class GameConfigCanonicalizer {
         throw new IllegalArgumentException("不支持的 JSON 基本类型");
     }
 
+    /**
+     * 数字规范化：去掉无意义小数位，不使用科学计数法，-0 统一为 0。
+     */
     private static String normalizeNumber(String raw) {
         try {
             BigDecimal decimal = new BigDecimal(raw);
@@ -161,6 +192,9 @@ public final class GameConfigCanonicalizer {
         }
     }
 
+    /**
+     * 字符串转义规则：不做 HTML 转义，中文和 emoji 保持 UTF-8 原样。
+     */
     private static void appendEscapedString(
             String value,
             StringBuilder builder
@@ -214,6 +248,9 @@ public final class GameConfigCanonicalizer {
         builder.append('"');
     }
 
+    /**
+     * 控制字符使用小写 \u00xx 形式转义。
+     */
     private static void appendUnicodeEscape(
             char value,
             StringBuilder builder
@@ -226,6 +263,11 @@ public final class GameConfigCanonicalizer {
         builder.append(hex[value & 0x0f]);
     }
 
+    /**
+     * 按 Unicode code point 比较两个字符串。
+     *
+     * <p>这样可以正确处理 emoji 等代理对字符，避免 UTF-16 默认排序差异。</p>
+     */
     private static int compareByCodePoint(
             String left,
             String right
