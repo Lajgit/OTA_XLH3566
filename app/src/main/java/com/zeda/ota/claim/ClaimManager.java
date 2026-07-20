@@ -12,11 +12,25 @@ public class ClaimManager {
 
     private static final String TAG = "OTA_TEST";
 
+//    private static final String BATCH_NO =
+//            "BATCH-202606-A";
+//
+//    //密钥，固定值（不自动认领为空）
+//    private static final String BATCH_SECRET =
+//            "PXD_AUTO_CLAIM_BATCH_202606_A_SECRET";
+    /**
+     * 后台配置的自动认领批次号。
+     */
     private static final String BATCH_NO =
-            "BATCH-202606-A";
+            "ACBFSGS2YACC6IO";
 
+
+    /**
+     * 设备侧预置的批次明文密钥。
+     *
+     */
     private static final String BATCH_SECRET =
-            "PXD_AUTO_CLAIM_BATCH_202606_A_SECRET";
+            "pevx7513ZxRWLFlXFw_2WepJOTWtusjA";
 
     private final ClaimApiClient apiClient =
             new ClaimApiClient();
