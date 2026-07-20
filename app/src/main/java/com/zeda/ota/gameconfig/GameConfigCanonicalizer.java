@@ -249,7 +249,7 @@ public final class GameConfigCanonicalizer {
     }
 
     /**
-     * 控制字符使用小写 \u00xx 形式转义。
+     * 控制字符使用小写 U+00XX 形式转义。
      */
     private static void appendUnicodeEscape(
             char value,
