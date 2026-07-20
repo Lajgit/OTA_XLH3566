@@ -4,10 +4,17 @@ import org.json.JSONObject;
 
 /**
  * 已可靠保存、等待 Unity 执行或等待结果回传的游戏配置任务。
+ *
+ * <p>pending_record 是 OTA 侧的关键恢复点：
+ * ACK 上报前必须先保存它；OTA 重启、MQTT 重连或 Unity ready 后，
+ * 也会基于它继续向 Unity 下发配置。</p>
  */
 public final class GameConfigPending {
 
+    /** 任务已保存，但还没有向 Unity 成功派发。 */
     public static final String STATE_SAVED = "saved";
+
+    /** 任务已经广播给 Unity，正在等待 Unity 返回结果。 */
     public static final String STATE_DISPATCHED = "dispatched";
 
     private final String messageId;
@@ -48,6 +55,11 @@ public final class GameConfigPending {
         this.dispatchCount = dispatchCount;
     }
 
+    /**
+     * 从已校验通过的后端指令生成 pending 任务。
+     *
+     * <p>此时任务状态为 saved，表示已经可以落盘并准备 ACK。</p>
+     */
     public static GameConfigPending fromCommand(
             GameConfigCommand command,
             String requestId,
@@ -68,6 +80,12 @@ public final class GameConfigPending {
         );
     }
 
+    /**
+     * 生成一个“已派发给 Unity”的新 pending 对象。
+     *
+     * <p>每次重发都会生成新的 requestId，Unity 返回结果时必须带回该 requestId，
+     * 状态机据此过滤过期结果。</p>
+     */
     public GameConfigPending markDispatched(
             String newRequestId,
             long now
@@ -87,6 +105,9 @@ public final class GameConfigPending {
         );
     }
 
+    /**
+     * 序列化为 SharedPreferences 中保存的 JSON 字符串。
+     */
     public JSONObject toJson() throws Exception {
         JSONObject json = new JSONObject();
         json.put("messageId", messageId);
@@ -103,6 +124,9 @@ public final class GameConfigPending {
         return json;
     }
 
+    /**
+     * 从 SharedPreferences 中保存的 JSON 字符串恢复 pending 任务。
+     */
     public static GameConfigPending fromJson(
             String value
     ) throws Exception {
