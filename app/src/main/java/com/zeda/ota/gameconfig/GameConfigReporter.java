@@ -12,6 +12,9 @@ import org.json.JSONObject;
 
 /**
  * 游戏实际配置状态上报器。
+ *
+ * <p>负责向后端 report/game-config 主题上报设备当前实际生效配置。
+ * 所有发布仍通过 MqttManager，保持 QoS=1、retain=false 的统一策略。</p>
  */
 public final class GameConfigReporter {
 
@@ -20,6 +23,12 @@ public final class GameConfigReporter {
     private GameConfigReporter() {
     }
 
+    /**
+     * 直接发布一条 report/game-config payload。
+     *
+     * <p>调用方通常是 GameConfigStore 的 outbox 刷新逻辑。
+     * 如果 MQTT 未连接，本方法返回 false，由 outbox 保留 payload 等待下次补发。</p>
+     */
     public static boolean reportPayload(
             Context context,
             String payload
@@ -55,6 +64,14 @@ public final class GameConfigReporter {
         }
     }
 
+    /**
+     * MQTT 首次连接、连接复用或自动重连后调用。
+     *
+     * <p>执行顺序：
+     * 1. 优先补发历史 outbox；
+     * 2. 如果本地存在 applied_record，再主动补报当前实际配置；
+     * 3. 触发 pending/applied 向 Unity 的恢复下发。</p>
+     */
     public static void flushOutbox(
             Context context
     ) {
@@ -86,6 +103,9 @@ public final class GameConfigReporter {
         }
     }
 
+    /**
+     * 补发之前因 MQTT 离线或发布失败而保留的 report/game-config。
+     */
     private static void flushSavedOutbox(
             Context context,
             GameConfigStore store
@@ -102,6 +122,11 @@ public final class GameConfigReporter {
         }
     }
 
+    /**
+     * 根据本地 applied_record 重新构造一条当前实际配置上报。
+     *
+     * <p>用于 OTA 重启或 MQTT 重连后，主动让后端重新获得设备当前配置状态。</p>
+     */
     private static void reportAppliedSnapshot(
             Context context,
             GameConfigStore store
